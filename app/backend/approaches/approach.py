@@ -27,7 +27,7 @@ from openai.types.chat import ChatCompletionMessageParam
 from core.authentication import AuthenticationHelper
 from text import nonewlines
 
-
+# Clase que representa un documento con varios atributos
 @dataclass
 class Document:
     id: Optional[str]
@@ -43,6 +43,7 @@ class Document:
     score: Optional[float] = None
     reranker_score: Optional[float] = None
 
+    # Serializa el documento para los resultados
     def serialize_for_results(self) -> dict[str, Any]:
         return {
             "id": self.id,
@@ -70,26 +71,25 @@ class Document:
             "reranker_score": self.reranker_score,
         }
 
+    # Recorta la lista de embeddings para propósitos de visualización
     @classmethod
     def trim_embedding(cls, embedding: Optional[List[float]]) -> Optional[str]:
-        """Returns a trimmed list of floats from the vector embedding."""
         if embedding:
             if len(embedding) > 2:
-                # Format the embedding list to show the first 2 items followed by the count of the remaining items."""
+                # Formatea la lista de embeddings para mostrar los primeros 2 elementos seguidos por el conteo de los elementos restantes
                 return f"[{embedding[0]}, {embedding[1]} ...+{len(embedding) - 2} more]"
             else:
                 return str(embedding)
-
         return None
 
-
+# Clase que representa un paso de pensamiento con título, descripción y propiedades opcionales
 @dataclass
 class ThoughtStep:
     title: str
     description: Optional[Any]
     props: Optional[dict[str, Any]] = None
 
-
+# Clase abstracta para diferentes enfoques
 class Approach(ABC):
     def __init__(
         self,
@@ -98,7 +98,7 @@ class Approach(ABC):
         auth_helper: AuthenticationHelper,
         query_language: Optional[str],
         query_speller: Optional[str],
-        embedding_deployment: Optional[str],  # Not needed for non-Azure OpenAI or for retrieval_mode="text"
+        embedding_deployment: Optional[str],
         embedding_model: str,
         embedding_dimensions: int,
         openai_host: str,
@@ -117,6 +117,7 @@ class Approach(ABC):
         self.vision_endpoint = vision_endpoint
         self.vision_token_provider = vision_token_provider
 
+    # Construye un filtro basado en los overrides y los claims de autenticación
     def build_filter(self, overrides: dict[str, Any], auth_claims: dict[str, Any]) -> Optional[str]:
         exclude_category = overrides.get("exclude_category")
         security_filter = self.auth_helper.build_security_filters(overrides, auth_claims)
@@ -127,6 +128,7 @@ class Approach(ABC):
             filters.append(security_filter)
         return None if len(filters) == 0 else " and ".join(filters)
 
+    # Realiza una búsqueda con varias opciones y devuelve una lista de documentos
     async def search(
         self,
         top: int,
@@ -194,6 +196,7 @@ class Approach(ABC):
 
         return qualified_documents
 
+    # Obtiene el contenido de las fuentes de los resultados de búsqueda
     def get_sources_content(
         self, results: List[Document], use_semantic_captions: bool, use_image_citation: bool
     ) -> list[str]:
@@ -210,6 +213,7 @@ class Approach(ABC):
                 for doc in results
             ]
 
+    # Obtiene la cita para una página fuente
     def get_citation(self, sourcepage: str, use_image_citation: bool) -> str:
         if use_image_citation:
             return sourcepage
@@ -222,6 +226,7 @@ class Approach(ABC):
 
             return sourcepage
 
+    # Calcula el embedding de texto para una consulta
     async def compute_text_embedding(self, q: str):
         SUPPORTED_DIMENSIONS_MODEL = {
             "text-embedding-ada-002": False,
@@ -236,7 +241,6 @@ class Approach(ABC):
             {"dimensions": self.embedding_dimensions} if SUPPORTED_DIMENSIONS_MODEL[self.embedding_model] else {}
         )
         embedding = await self.openai_client.embeddings.create(
-            # Azure OpenAI takes the deployment name as the model name
             model=self.embedding_deployment if self.embedding_deployment else self.embedding_model,
             input=q,
             **dimensions_args,
@@ -244,6 +248,7 @@ class Approach(ABC):
         query_vector = embedding.data[0].embedding
         return VectorizedQuery(vector=query_vector, k_nearest_neighbors=50, fields="embedding")
 
+    # Calcula el embedding de imagen para una consulta
     async def compute_image_embedding(self, q: str):
         endpoint = urljoin(self.vision_endpoint, "computervision/retrieval:vectorizeText")
         headers = {"Content-Type": "application/json"}
@@ -260,6 +265,7 @@ class Approach(ABC):
                 image_query_vector = json["vector"]
         return VectorizedQuery(vector=image_query_vector, k_nearest_neighbors=50, fields="imageEmbedding")
 
+    # Método abstracto para ejecutar el enfoque
     async def run(
         self,
         messages: list[ChatCompletionMessageParam],
@@ -268,6 +274,7 @@ class Approach(ABC):
     ) -> dict[str, Any]:
         raise NotImplementedError
 
+    # Método abstracto para ejecutar el enfoque con streaming
     async def run_stream(
         self,
         messages: list[ChatCompletionMessageParam],

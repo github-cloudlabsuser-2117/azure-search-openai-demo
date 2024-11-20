@@ -270,3 +270,22 @@ so please use the support mechanisms described above, and we will do our best to
 ### Note
 
 >Note: The PDF documents used in this demo contain information generated using a language model (Azure OpenAI Service). The information contained in these documents is only for demonstration purposes and does not reflect the opinions or beliefs of Microsoft. Microsoft makes no representations or warranties of any kind, express or implied, about the completeness, accuracy, reliability, suitability or availability with respect to the information contained in this document. All rights reserved to Microsoft.
+
+
+## Requisitos del Backend
+
+El archivo `app/backend/requirements.txt` contiene las dependencias necesarias para el backend de la aplicación. A continuación se enumeran los requisitos:
+
+- **Flask**: Un microframework para Python basado en Werkzeug y Jinja2.
+- **SQLAlchemy**: Un ORM (Object Relational Mapper) para Python.
+- **requests**: Una biblioteca HTTP simple y elegante para Python.
+- **gunicorn**: Un servidor HTTP WSGI para aplicaciones Python.
+- **pytest**: Un marco de pruebas para Python.
+- **mypy**: Un verificador de tipos opcional para Python.
+- **black**: Un formateador de código para Python.
+- **ruff**: Un linter para Python.
+
+Para instalar estos requisitos, ejecuta el siguiente comando en tu entorno virtual:
+
+```sh
+pip install -r [requirements.txt](http://_vscodecontentref_/1)
